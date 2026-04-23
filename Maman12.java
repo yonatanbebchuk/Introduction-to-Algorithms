@@ -1,15 +1,8 @@
 import java.util.Random;
+import java.util.Arrays;
 
-/**
- * Maman 12 - Maximum Subarray Problem (פרוייקט הרצה)
- * Course: Data Structures and Introduction to Algorithms (20407)
- * 
- * Includes both Divide & Conquer (O(n log n)) and Kadane's Algorithm (O(n)).
- * The main method runs the required empirical experiment comparing runtimes.
- */
 public class Maman12 {
 
-    // Helper class to store the results
     public static class SubarrayResult {
         public int low;
         public int high;
@@ -27,9 +20,6 @@ public class Maman12 {
         }
     }
 
-    /**
-     * Helper for Divide and Conquer: Finds the max subarray crossing the midpoint.
-     */
     private static SubarrayResult findMaxCrossingSubarray(int[] A, int low, int mid, int high) {
         long leftSum = Integer.MIN_VALUE;
         long sum = 0;
@@ -58,12 +48,9 @@ public class Maman12 {
         return new SubarrayResult(maxLeft, maxRight, leftSum + rightSum);
     }
 
-    /**
-     * 1. Divide and Conquer Approach - O(n log n)
-     */
     public static SubarrayResult findMaximumSubarray(int[] A, int low, int high) {
         if (high == low) {
-            return new SubarrayResult(low, high, A[low]); // Base case: only one element
+            return new SubarrayResult(low, high, A[low]);
         } else {
             int mid = (low + high) / 2;
             SubarrayResult left = findMaximumSubarray(A, low, mid);
@@ -80,9 +67,6 @@ public class Maman12 {
         }
     }
 
-    /**
-     * 2. Kadane's Algorithm - O(n)
-     */
     public static SubarrayResult kadane(int[] A) {
         if (A == null || A.length == 0) return new SubarrayResult(-1, -1, 0);
 
@@ -91,7 +75,6 @@ public class Maman12 {
         int start = 0, end = 0, tempStart = 0;
 
         for (int i = 1; i < A.length; i++) {
-            // Decide whether to start a new sequence at i, or append to the current one
             if (A[i] > currentMax + A[i]) {
                 currentMax = A[i];
                 tempStart = i;
@@ -99,7 +82,6 @@ public class Maman12 {
                 currentMax += A[i];
             }
 
-            // Update global maximum if we found a better sequence
             if (currentMax > maxSoFar) {
                 maxSoFar = currentMax;
                 start = tempStart;
@@ -109,10 +91,43 @@ public class Maman12 {
         return new SubarrayResult(start, end, maxSoFar);
     }
 
-    /**
-     * Main Execution: Runs the Empirical Experiment required by the assignment.
-     */
+    public static void testEdgeCases() {
+        System.out.println("===============================================================");
+        System.out.println("  Maman 12 Explicit Edge Cases Testing");
+        System.out.println("===============================================================");
+        
+        int[][] cases = {
+            {-5, -2, -9, -1, -3}, // All negative
+            {1, 2, 3, 4, 5},      // All positive
+            {0, 0, 0, 0, 0},      // All zeros
+            {42},                 // Size 1
+            {2, -5, 2, -5, 2}     // Multiple sub-arrays with the same max sum
+        };
+        String[] names = {
+            "All Negatives", 
+            "All Positives", 
+            "All Zeros", 
+            "Size 1", 
+            "Multiple Max Sums (Sum is 2)"
+        };
+        
+        for (int i = 0; i < cases.length; i++) {
+            System.out.println(names[i] + ": " + Arrays.toString(cases[i]));
+            SubarrayResult dc = findMaximumSubarray(cases[i], 0, cases[i].length - 1);
+            SubarrayResult k = kadane(cases[i]);
+            System.out.println("  D&C    -> " + dc);
+            System.out.println("  Kadane -> " + k);
+            System.out.println();
+        }
+    }
+
+    // Bug fix for Programiz: No space between main and (String[] args)
     public static void main(String[] args) {
+        
+        // 1. Run mandatory edge cases
+        testEdgeCases();
+
+        // 2. Run empirical time tests
         int[] sizes = {100, 1000, 10000, 100000};
         int iterations = 10;
         Random rand = new Random();
@@ -130,16 +145,14 @@ public class Maman12 {
             for (int i = 0; i < iterations; i++) {
                 int[] A = new int[size];
                 for (int j = 0; j < size; j++) {
-                    A[j] = rand.nextInt(201) - 100; // Random integers from -100 to 100
+                    A[j] = rand.nextInt(201) - 100;
                 }
 
-                // --- Benchmark Divide & Conquer ---
                 long startDC = System.nanoTime();
                 findMaximumSubarray(A, 0, size - 1);
                 long endDC = System.nanoTime();
                 totalTimeDC += (endDC - startDC);
 
-                // --- Benchmark Kadane's ---
                 long startKadane = System.nanoTime();
                 kadane(A);
                 long endKadane = System.nanoTime();
@@ -152,7 +165,5 @@ public class Maman12 {
             System.out.printf("%-10d | %-20d | %-20d\n", size, avgDC, avgKadane);
         }
         System.out.println("===============================================================");
-        
-        System.out.println("\nNote: Theoretical questions and answers can be found in the README/accompanying document.");
     }
 }
