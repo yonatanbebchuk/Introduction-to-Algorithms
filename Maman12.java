@@ -20,43 +20,40 @@ public class Maman12 {
         }
     }
 
-    private static SubarrayResult findMaxCrossingSubarray(int[] A, int low, int mid, int high) {
-        long leftSum = Integer.MIN_VALUE;
-        long sum = 0;
-        int maxLeft = mid;
-        
-        for (int i = mid; i >= low; i--) {
-            sum += A[i];
-            if (sum > leftSum) {
-                leftSum = sum;
-                maxLeft = i;
-            }
-        }
-
-        long rightSum = Integer.MIN_VALUE;
-        sum = 0;
-        int maxRight = mid + 1;
-        
-        for (int j = mid + 1; j <= high; j++) {
-            sum += A[j];
-            if (sum > rightSum) {
-                rightSum = sum;
-                maxRight = j;
-            }
-        }
-        
-        return new SubarrayResult(maxLeft, maxRight, leftSum + rightSum);
-    }
-
     public static SubarrayResult findMaximumSubarray(int[] A, int low, int high) {
+        // Stop Condition: if there is only one element in the given array return it
         if (high == low) {
             return new SubarrayResult(low, high, A[low]);
         } else {
+            // Divide: find the middle of the array and call function on left and right halves
             int mid = (low + high) / 2;
             SubarrayResult left = findMaximumSubarray(A, low, mid);
             SubarrayResult right = findMaximumSubarray(A, mid + 1, high);
-            SubarrayResult cross = findMaxCrossingSubarray(A, low, mid, high);
 
+            // Find the maximum subarray crossing between the two halves for comparison
+            long leftSum = Integer.MIN_VALUE, rightSum = Integer.MIN_VALUE, sum = 0;
+            int maxLeft = mid, maxRight = mid + 1;
+
+            for (int i = mid; i >= low; i--) { // Find the maximum starting point
+                sum += A[i];
+                if (sum > leftSum) {
+                    leftSum = sum;
+                    maxLeft = i;
+                }
+            }
+
+            sum = 0;
+            for (int j = mid + 1; j <= high; j++) { // Find the maximum ending point
+                sum += A[j];
+                if (sum > rightSum) {
+                    rightSum = sum;
+                    maxRight = j;
+                }
+            }
+
+            SubarrayResult cross = new SubarrayResult(maxLeft, maxRight, leftSum + rightSum);
+
+            // Return the subarray with the greatest sum between the left half, the right half, and their crossing.
             if (left.sum >= right.sum && left.sum >= cross.sum) {
                 return left;
             } else if (right.sum >= left.sum && right.sum >= cross.sum) {
@@ -67,35 +64,46 @@ public class Maman12 {
         }
     }
 
+    public static SubarrayResult divideAndConquer(int[] A) {
+        return findMaximumSubarray(A, 0, A.length - 1);
+    }
+
     public static SubarrayResult kadane(int[] A) {
+        // Check if there are any elements in the array.
         if (A == null || A.length == 0) return new SubarrayResult(-1, -1, 0);
 
-        long maxSoFar = A[0];
-        long currentMax = A[0];
-        int start = 0, end = 0, tempStart = 0;
+        long maxSum = A[0], currentSum = A[0];
+        int start = 0, end = 0, currentStart = 0;
 
         for (int i = 1; i < A.length; i++) {
-            if (A[i] > currentMax + A[i]) {
-                currentMax = A[i];
-                tempStart = i;
+            // Decide whether to append A[i] to current sequence, or start a new sequence at A[i] depending on
+            // which is greater.
+            if (A[i] > currentSum + A[i]) {
+                currentSum = A[i];
+                currentStart = i;
             } else {
-                currentMax += A[i];
+                currentSum += A[i];
             }
 
-            if (currentMax > maxSoFar) {
-                maxSoFar = currentMax;
-                start = tempStart;
+            // Update the overall max if the current sequence is strictly better
+            if (currentSum > maxSum) {
+                maxSum = currentSum;
+                start = currentStart;
                 end = i;
             }
         }
-        return new SubarrayResult(start, end, maxSoFar);
+        return new SubarrayResult(start, end, maxSum);
     }
 
-    public static void testEdgeCases() {
-        System.out.println("===============================================================");
-        System.out.println("  Maman 12 Explicit Edge Cases Testing");
-        System.out.println("===============================================================");
+    public static void main(String[] args) {
+
+        System.out.println("Maman12 (Yonatan Bebchuk 209805233)");
         
+        // 1. Test edge cases
+        System.out.println("===============================================================");
+        System.out.println("  Edge Cases");
+        System.out.println("===============================================================");
+
         int[][] cases = {
             {-5, -2, -9, -1, -3}, // All negative
             {1, 2, 3, 4, 5},      // All positive
@@ -104,13 +112,13 @@ public class Maman12 {
             {2, -5, 2, -5, 2}     // Multiple sub-arrays with the same max sum
         };
         String[] names = {
-            "All Negatives", 
-            "All Positives", 
-            "All Zeros", 
-            "Size 1", 
+            "All Negatives",
+            "All Positives",
+            "All Zeros",
+            "Size 1",
             "Multiple Max Sums (Sum is 2)"
         };
-        
+
         for (int i = 0; i < cases.length; i++) {
             System.out.println(names[i] + ": " + Arrays.toString(cases[i]));
             SubarrayResult dc = findMaximumSubarray(cases[i], 0, cases[i].length - 1);
@@ -119,21 +127,14 @@ public class Maman12 {
             System.out.println("  Kadane -> " + k);
             System.out.println();
         }
-    }
 
-    // Bug fix for Programiz: No space between main and (String[] args)
-    public static void main(String[] args) {
-        
-        // 1. Run mandatory edge cases
-        testEdgeCases();
-
-        // 2. Run empirical time tests
+        // 2. Run empirical experiment
         int[] sizes = {100, 1000, 10000, 100000};
         int iterations = 10;
         Random rand = new Random();
 
         System.out.println("===============================================================");
-        System.out.println("  Maman 12 Empirical Experiment Results");
+        System.out.println("  Empirical Experiment");
         System.out.println("===============================================================");
         System.out.printf("%-10s | %-20s | %-20s\n", "Size (n)", "D&C Avg Time (ns)", "Kadane Avg Time (ns)");
         System.out.println("---------------------------------------------------------------");
@@ -149,7 +150,7 @@ public class Maman12 {
                 }
 
                 long startDC = System.nanoTime();
-                findMaximumSubarray(A, 0, size - 1);
+                divideAndConquer(A);
                 long endDC = System.nanoTime();
                 totalTimeDC += (endDC - startDC);
 
